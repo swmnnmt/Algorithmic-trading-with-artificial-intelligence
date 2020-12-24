@@ -13,3 +13,4 @@
 - [x] Raw data preprocessing according to the needs of the LSTM neural network
 - [x] Train the model with scaled data
 - [x] Validate the model and optimize prediction accuracy.
+- [x] Adding SMA (Simple Moving Average) technical indicator to the LSTM neural network
