@@ -3,38 +3,41 @@ import pandas as pd
 from sklearn import preprocessing
 
 
-def preprocess(csv_path,history_points):
+def preprocess(csv_path, history_points):
     data = pd.read_csv(csv_path)
     data = data.drop(columns=['date', 'adjClose', 'value', 'count'])
     data = data.drop(0, axis=0)
+    data_np = data.to_numpy()
+    # splitting the dataset up into train and test sets
+    n1 = int(data_np.shape[0] * 0.618)
+    n2 = int((data_np.shape[0] - n1) / 2)
+    x_train = data_np[:n1]
+    x_val = data_np[n1: n1 + n2]
+    x_test = data_np[n1 + n2:]
+    y_train_real = slicing(x_train, history_points)[1]
+    y_train_real = np.expand_dims(y_train_real, -1)
+    scale_back = preprocessing.MinMaxScaler()
+    scale_back.fit(y_train_real)
+    y_test_real = slicing(x_test, history_points)[1]
 
-    data_normaliser = preprocessing.MinMaxScaler()
-    data_normalised = data_normaliser.fit_transform(data)
+    minmax_scale = preprocessing.MinMaxScaler().fit(x_train)
+    x_train_n = minmax_scale.transform(x_train)
+    x_val_n = minmax_scale.transform(x_val)
+    x_test_n = minmax_scale.transform(x_test)
 
+    ohlvc_train, y_train = slicing(x_train_n, history_points)
+    x_val_n, y_val = slicing(x_val_n, history_points)
+    ohlvc_test, y_test = slicing(x_test_n, history_points)
+    y_train = np.expand_dims(y_train, -1)
+    assert ohlvc_train.shape[0] == y_train.shape[0]
+    return ohlvc_train, y_train, ohlvc_test, y_test, x_val_n, y_val, y_test_real, scale_back
+
+
+def slicing(data, history_points):
     # using the last {history_points} open high low close volume data points, predict the next open value
-    ohlvc_histories_normalised = np.array(
-        [data_normalised[i: i + history_points].copy() for i in range(len(data_normalised) - history_points)])
-    next_day_open_values_normalised = np.array(
-        [data_normalised[:, 0][i + history_points].copy() for i in range(len(data_normalised) - history_points)])
-    next_day_open_values_normalised = np.expand_dims(next_day_open_values_normalised, -1)
-    data = data.to_numpy()
+    ohlvc_histories = np.array(
+        [data[i: i + history_points].copy() for i in range(len(data) - history_points)])
+    next_day_open_values = np.array(
+        [data[:, 0][i + history_points].copy() for i in range(len(data) - history_points)])
 
-    next_day_open_values = np.array([data[:, 0][i + history_points].copy() for i in range(len(data) - history_points)])
-    next_day_open_values = np.expand_dims(next_day_open_values, -1)
-
-    y_normaliser = preprocessing.MinMaxScaler()
-    y_normaliser.fit(next_day_open_values)
-
-    technical_indicators = []
-    for his in ohlvc_histories_normalised:
-        # since we are using his[4] we are taking the SMA of the close price
-        sma = np.mean(his[:, [1, 2, 4]])
-        technical_indicators.append(np.array([sma]))
-
-    technical_indicators = np.array(technical_indicators)
-
-    tech_ind_scaler = preprocessing.MinMaxScaler()
-    technical_indicators_normalised = tech_ind_scaler.fit_transform(technical_indicators)
-
-    assert ohlvc_histories_normalised.shape[0] == next_day_open_values_normalised.shape[0] == technical_indicators_normalised.shape[0]
-    return ohlvc_histories_normalised, technical_indicators_normalised, next_day_open_values_normalised, next_day_open_values, y_normaliser
+    return ohlvc_histories, next_day_open_values
