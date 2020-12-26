@@ -8,8 +8,10 @@ def preprocess(csv_path, history_points):
     data = data.drop(columns=['date', 'adjClose', 'value', 'count'])
     data = data.drop(0, axis=0)
     data_np = data.to_numpy()
-    # splitting the dataset up into train and test sets
-    n1 = int(data_np.shape[0] * 0.618)
+    """
+    Train-Test-Validation Split
+    """
+    n1 = int(data_np.shape[0] * 0.7)
     n2 = int((data_np.shape[0] - n1) / 2)
     x_train = data_np[:n1]
     x_val = data_np[n1: n1 + n2]
@@ -29,8 +31,42 @@ def preprocess(csv_path, history_points):
     x_val_n, y_val = slicing(x_val_n, history_points)
     ohlvc_test, y_test = slicing(x_test_n, history_points)
     y_train = np.expand_dims(y_train, -1)
-    assert ohlvc_train.shape[0] == y_train.shape[0]
-    return ohlvc_train, y_train, ohlvc_test, y_test, x_val_n, y_val, y_test_real, scale_back
+
+    """
+    SMA Technical Indicator
+    """
+    x_train_ind = slicing(x_train, history_points)[0]
+    tech_ind_train = []
+    for his in x_train_ind:
+        # since we are using his[1,2,4] we are taking the SMA of the high, low ,closing price
+        sma = np.mean(his[:, [1, 2, 4]])
+        tech_ind_train.append(np.array([sma]))
+
+    x_test_ind = slicing(x_test, history_points)[0]
+    tech_ind_test = []
+    for his in x_test_ind:
+        # since we are using his[1,2,4] we are taking the SMA of the high, low ,closing price
+        sma = np.mean(his[:, [1, 2, 4]])
+        tech_ind_test.append(np.array([sma]))
+
+    x_val_ind = slicing(x_val, history_points)[0]
+    tech_ind_val = []
+    for his in x_val_ind:
+        # since we are using his[1,2,4] we are taking the SMA of the high, low ,closing price
+        sma = np.mean(his[:, [1, 2, 4]])
+        tech_ind_val.append(np.array([sma]))
+
+    tech_ind_scaler = preprocessing.MinMaxScaler().fit(tech_ind_train)
+    tech_ind_train = tech_ind_scaler.transform(tech_ind_train)
+    tech_ind_test = tech_ind_scaler.transform(tech_ind_test)
+    tech_ind_val = tech_ind_scaler.transform(tech_ind_val)
+
+    tech_ind_train = np.array(tech_ind_train)
+    tech_ind_test = np.array(tech_ind_test)
+    tech_ind_val = np.array(tech_ind_val)
+
+    assert ohlvc_train.shape[0] == y_train.shape[0] == tech_ind_train.shape[0]
+    return ohlvc_train, y_train, ohlvc_test, y_test, x_val_n, y_val, y_test_real, scale_back, tech_ind_train, tech_ind_test, tech_ind_val
 
 
 def slicing(data, history_points):
