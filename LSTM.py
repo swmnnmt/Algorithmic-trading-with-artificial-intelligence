@@ -3,6 +3,7 @@ import tensorflow as tf
 from keras import optimizers
 from keras.layers import Dense, Dropout, LSTM, Input, Activation, concatenate
 from keras.models import Model
+from keras.callbacks import ModelCheckpoint
 
 np.random.seed(4)
 
@@ -40,11 +41,10 @@ def lstm_model(history_points, x_train, y_train, x_test, y_test, x_val, y_val, y
     model.compile(optimizer=adam, loss='mse')
 
     # Fitting model
-    from keras.callbacks import ModelCheckpoint
     mcp_save = ModelCheckpoint('./stocks_price.h5', save_best_only=True, monitor='val_loss', mode='min')
 
     model.fit(x=[x_train,tech_ind_train], y=y_train, batch_size=32, epochs=50, shuffle=True,
-              validation_data=([x_val, tech_ind_val], y_val), callbacks=[mcp_save], verbose=1)
+              validation_data=([x_val, tech_ind_val], y_val), callbacks=[mcp_save], verbose=0)
     model.load_weights('./stocks_price.h5')
     evaluation = model.evaluate([x_test, tech_ind_test], y_test)
     print("Prediction Error for normalized data : {}".format(evaluation))

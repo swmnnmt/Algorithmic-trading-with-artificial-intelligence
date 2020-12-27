@@ -33,28 +33,37 @@ def preprocess(csv_path, history_points):
     y_train = np.expand_dims(y_train, -1)
 
     """
-    SMA Technical Indicator
+    Technical Indicators
     """
     x_train_ind = slicing(x_train, history_points)[0]
     tech_ind_train = []
     for his in x_train_ind:
         # since we are using his[1,2,4] we are taking the SMA of the high, low ,closing price
         sma = np.mean(his[:, [1, 2, 4]])
-        tech_ind_train.append(np.array([sma]))
+        # 12 and 26 is the default values for ema in MACD indicator
+        macd = calc_ema(his, 12) - calc_ema(his, 26)
+        obv = calOBV(his)[-1]
+        tech_ind_train.append(np.array([sma, macd, obv]))
 
     x_test_ind = slicing(x_test, history_points)[0]
     tech_ind_test = []
     for his in x_test_ind:
         # since we are using his[1,2,4] we are taking the SMA of the high, low ,closing price
         sma = np.mean(his[:, [1, 2, 4]])
-        tech_ind_test.append(np.array([sma]))
+        # 12 and 26 is the default values for ema in MACD indicator
+        macd = calc_ema(his, 12) - calc_ema(his, 26)
+        obv = calOBV(his)[-1]
+        tech_ind_test.append(np.array([sma, macd, obv]))
 
     x_val_ind = slicing(x_val, history_points)[0]
     tech_ind_val = []
     for his in x_val_ind:
         # since we are using his[1,2,4] we are taking the SMA of the high, low ,closing price
         sma = np.mean(his[:, [1, 2, 4]])
-        tech_ind_val.append(np.array([sma]))
+        # 12 and 26 is the default values for ema in MACD indicator
+        macd = calc_ema(his, 12) - calc_ema(his, 26)
+        obv = calOBV(his)[-1]
+        tech_ind_val.append(np.array([sma, macd, obv]))
 
     tech_ind_scaler = preprocessing.MinMaxScaler().fit(tech_ind_train)
     tech_ind_train = tech_ind_scaler.transform(tech_ind_train)
@@ -77,3 +86,26 @@ def slicing(data, history_points):
         [data[:, 0][i + history_points].copy() for i in range(len(data) - history_points)])
 
     return ohlvc_histories, next_day_open_values
+
+
+def calc_ema(values, time_period):
+    # https://www.investopedia.com/ask/answers/122314/what-exponential-moving-average-ema-formula-and-how-ema-calculated.asp
+    sma = np.mean(values[:, [1, 2, 4]])
+    ema_values = [sma]
+    k = 2 / (1 + time_period)
+    for i in range(len(values) - time_period, len(values)):
+        close = values[i][4]
+        ema_values.append(close * k + ema_values[-1] * (1 - k))
+    return ema_values[-1]
+
+
+def calOBV(df):
+    df = pd.DataFrame(df, columns=['open', 'high', 'low', 'volume', 'close'])
+    # Create an OBV column, first fill it with 0
+    obv = [0]
+    for i in range(1, len(df)):
+        if df.loc[i, 'close'] >= df.loc[i - 1, 'close']:
+            obv.append(obv[i - 1] + df.loc[i, 'volume'])
+        elif df.loc[i, 'close'] < df.loc[i - 1, 'close']:
+            obv.append(obv[i - 1] - df.loc[i, 'volume'])
+    return obv
