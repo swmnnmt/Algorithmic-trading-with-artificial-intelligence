@@ -1,5 +1,4 @@
 ## Todo
-- [ ] Adding technical indicators to the LSTM neural network including EMA (Exponential Moving Average), MACD (Moving Average Convergence Divergence)
 - [ ] Generalization of neural network training from one symbol to several other symbols of Tehran Stock Exchange
 - [ ] Tune LSTM model and model parameters and optimize training data
 - [ ] The design of the stock trading algorithm is based on our forecast
@@ -14,3 +13,6 @@
 - [x] Train the model with scaled data
 - [x] Validate the model and optimize prediction accuracy.
 - [x] Adding SMA (Simple Moving Average) technical indicators to the LSTM neural network
+- [x] Adding EMA (Exponential Moving Average) technical indicator to the LSTM neural network
+- [x] Adding MACD (Moving Average Convergence Divergence) technical indicator to the LSTM neural network
+- [x] Adding OBV (On Balance Volume) technical indicator to the LSTM neural network
