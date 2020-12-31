@@ -11,13 +11,11 @@ def trading_algorithm(x_test, tech_ind_test, scale_back, model):
         normalised_price_today = ohlcv[-1][0]
         normalised_price_today = np.array([[normalised_price_today]])
         price_today = scale_back.inverse_transform(normalised_price_today)
-        predicted = np.squeeze(scale_back.inverse_transform(model.predict([[ohlcv], [ind]])))
+        predicted = np.squeeze(scale_back.inverse_transform(model.predict([np.array([ohlcv]), np.array([ind])])))
         delta = predicted - price_today
-        # print(delta)
         if delta > thresh:
             buys.append((x, price_today[0][0]))
         elif delta < -thresh:
             sells.append((x, price_today[0][0]))
         x += 1
-    print(buys)
-    print(sells)
+    return buys, sells
