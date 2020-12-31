@@ -22,6 +22,12 @@ I found a service called pytse client. They offered the daily price history of T
 years. This included the open, high, low, close, volume,etc of trades for each day, from today all the way back up to
 1380s. Extract your CSV file in `/data` folder which has Open Price, High Price, Low Price, Volume, Close Price columns.
 
+### The Algorithm
+Armed with an okay-ish stock prediction algorithm I thought of a naive way of creating a bot to decide to buy/sell 
+a stock today given the stock’s history. In essence, you just predict the opening value of the stock for the next day, 
+and if it is beyond a threshold amount you buy the stock. If it is below another threshold amount, sell the stock.
+This dead simple algorithm actually seemed to work quite well — visually at least.
+
 ### How to run it:
 
 #### Anaconda:
