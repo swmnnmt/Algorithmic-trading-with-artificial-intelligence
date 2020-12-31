@@ -13,6 +13,5 @@
 - [x] Adding SMA (Simple Moving Average) technical indicators to the LSTM neural network
 - [x] Adding EMA (Exponential Moving Average) technical indicator to the LSTM neural network
 - [x] Adding MACD (Moving Average Convergence Divergence) technical indicator to the LSTM neural network
-- [x] Adding OBV (On Balance Volume) technical indicator to the LSTM neural network
 - [x] Tune LSTM model and model parameters and optimize training data
 - [x] The design of the stock trading algorithm is based on our forecast
