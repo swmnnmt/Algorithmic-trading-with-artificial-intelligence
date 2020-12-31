@@ -1,9 +1,9 @@
 import numpy as np
 import tensorflow as tf
 from keras import optimizers
+from keras.callbacks import ModelCheckpoint
 from keras.layers import Dense, Dropout, LSTM, Input, Activation, concatenate
 from keras.models import Model
-from keras.callbacks import ModelCheckpoint
 
 np.random.seed(4)
 
@@ -11,7 +11,7 @@ tf.random.set_seed(4)
 
 
 def lstm_model(history_points, x_train, y_train, x_test, y_test, x_val, y_val, y_test_real, scale_back,
-               tech_ind_train, tech_ind_test,tech_ind_val):
+               tech_ind_train, tech_ind_test, tech_ind_val):
     # define two sets of inputs
     lstm_input = Input(shape=(history_points, 5), name='lstm_input')
     dense_input = Input(shape=(tech_ind_train.shape[1],), name='tech_input')
@@ -43,17 +43,20 @@ def lstm_model(history_points, x_train, y_train, x_test, y_test, x_val, y_val, y
     # Fitting model
     mcp_save = ModelCheckpoint('./stocks_price.h5', save_best_only=True, monitor='val_loss', mode='min')
 
-    model.fit(x=[x_train,tech_ind_train], y=y_train, batch_size=32, epochs=50, shuffle=True,
+    model.fit(x=[x_train, tech_ind_train], y=y_train, batch_size=32, epochs=50, shuffle=True,
               validation_data=([x_val, tech_ind_val], y_val), callbacks=[mcp_save], verbose=0)
     model.load_weights('./stocks_price.h5')
+
+    # Evaluate model (scaled data)
     evaluation = model.evaluate([x_test, tech_ind_test], y_test)
     print("Prediction Error for normalized data : {}".format(evaluation))
 
+    # Evaluate model (unscaled data)
     y_test_predicted = model.predict([x_test, tech_ind_test])
     y_test_predicted = scale_back.inverse_transform(y_test_predicted)
+    rmse = np.square(np.mean(y_test_real - y_test_predicted))
+    scaled_rmse = rmse / (np.max(y_test_real) - np.min(y_test_real)) * 100
 
-    real_mse = np.mean(np.square(y_test_real - y_test_predicted))
-    scaled_mse = real_mse / (np.max(y_test_real) - np.min(y_test_real)) * 100
-    print("Prediction Error for real data : {}".format(scaled_mse))
+    print("Adjusted Prediction Root Mean Squared Error for real data : {} % ".format(scaled_rmse))
 
-    return y_test_predicted
+    return y_test_predicted, model
