@@ -42,8 +42,7 @@ def preprocess(csv_path, history_points):
         sma = np.mean(his[:, [1, 2, 4]])
         # 12 and 26 is the default values for ema in MACD indicator
         macd = calc_ema(his, 12) - calc_ema(his, 26)
-        obv = calOBV(his)[-1]
-        tech_ind_train.append(np.array([sma, macd, obv]))
+        tech_ind_train.append(np.array([sma, macd]))
 
     x_test_ind = slicing(x_test, history_points)[0]
     tech_ind_test = []
@@ -52,8 +51,7 @@ def preprocess(csv_path, history_points):
         sma = np.mean(his[:, [1, 2, 4]])
         # 12 and 26 is the default values for ema in MACD indicator
         macd = calc_ema(his, 12) - calc_ema(his, 26)
-        obv = calOBV(his)[-1]
-        tech_ind_test.append(np.array([sma, macd, obv]))
+        tech_ind_test.append(np.array([sma, macd]))
 
     x_val_ind = slicing(x_val, history_points)[0]
     tech_ind_val = []
@@ -62,8 +60,8 @@ def preprocess(csv_path, history_points):
         sma = np.mean(his[:, [1, 2, 4]])
         # 12 and 26 is the default values for ema in MACD indicator
         macd = calc_ema(his, 12) - calc_ema(his, 26)
-        obv = calOBV(his)[-1]
-        tech_ind_val.append(np.array([sma, macd, obv]))
+
+        tech_ind_val.append(np.array([sma, macd]))
 
     tech_ind_scaler = preprocessing.MinMaxScaler().fit(tech_ind_train)
     tech_ind_train = tech_ind_scaler.transform(tech_ind_train)
@@ -97,15 +95,3 @@ def calc_ema(values, time_period):
         close = values[i][4]
         ema_values.append(close * k + ema_values[-1] * (1 - k))
     return ema_values[-1]
-
-
-def calOBV(df):
-    df = pd.DataFrame(df, columns=['open', 'high', 'low', 'volume', 'close'])
-    # Create an OBV column, first fill it with 0
-    obv = [0]
-    for i in range(1, len(df)):
-        if df.loc[i, 'close'] >= df.loc[i - 1, 'close']:
-            obv.append(obv[i - 1] + df.loc[i, 'volume'])
-        elif df.loc[i, 'close'] < df.loc[i - 1, 'close']:
-            obv.append(obv[i - 1] - df.loc[i, 'volume'])
-    return obv
