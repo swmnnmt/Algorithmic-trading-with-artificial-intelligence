@@ -4,6 +4,8 @@ from keras import optimizers
 from keras.callbacks import ModelCheckpoint
 from keras.layers import Dense, Dropout, LSTM, Input, Activation, concatenate
 from keras.models import Model
+from tensorflow.keras.losses import MeanSquaredError
+from sklearn.metrics import mean_squared_error
 
 np.random.seed(4)
 
@@ -38,7 +40,7 @@ def lstm_model(history_points, x_train, y_train, x_test, y_test, x_val, y_val, y
 
     adam = optimizers.Adam(lr=0.0005)
 
-    model.compile(optimizer=adam, loss='mse')
+    model.compile(optimizer=adam, loss=MeanSquaredError())
 
     # Fitting model
     mcp_save = ModelCheckpoint('./stocks_price.h5', save_best_only=True, monitor='val_loss', mode='min')
@@ -54,9 +56,8 @@ def lstm_model(history_points, x_train, y_train, x_test, y_test, x_val, y_val, y
     # Evaluate model (unscaled data)
     y_test_predicted = model.predict([x_test, tech_ind_test])
     y_test_predicted = scale_back.inverse_transform(y_test_predicted)
-    rmse = np.square(np.mean(y_test_real - y_test_predicted))
-    scaled_rmse = rmse / (np.max(y_test_real) - np.min(y_test_real)) * 100
+    real_rmse = mean_squared_error(y_test_real,y_test_predicted,squared=False)
 
-    print("Adjusted Prediction Root Mean Squared Error for real data : {} % ".format(scaled_rmse))
+    print("Adjusted Prediction Mean Squared Error for real data : {}  ".format(real_rmse))
 
     return y_test_predicted, model
